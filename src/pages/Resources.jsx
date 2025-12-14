@@ -147,9 +147,9 @@ const Resources = () => {
         setActiveTab(newValue);
     };
 
-    const renderResourceCard = (resource, type) => {
+    const renderResourceCard = (resource, type, index) => {
         return (
-            <Grid item xs={12} sm={6} md={4} key={resource.title}>
+            <Grid item xs={12} sm={6} md={4} key={`${resource.title}-${index}`}>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -252,11 +252,27 @@ const Resources = () => {
                     </Tabs>
                 </Box>
 
-                <Grid container spacing={3}>
-                    {tabContent[activeTab].data.map((resource) =>
-                        renderResourceCard(resource, tabContent[activeTab].label.toLowerCase())
-                    )}
-                </Grid>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                        <Typography>Loading resources...</Typography>
+                    </Box>
+                ) : (
+                    <Grid container spacing={3}>
+                        {tabContent[activeTab].data.length > 0 ? (
+                            tabContent[activeTab].data.map((resource, index) =>
+                                renderResourceCard(resource, tabContent[activeTab].label.toLowerCase(), index)
+                            )
+                        ) : (
+                            <Grid item xs={12}>
+                                <Box sx={{ textAlign: 'center', py: 4 }}>
+                                    <Typography color="text.secondary">
+                                        No resources found in this category.
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        )}
+                    </Grid>
+                )}
 
                 <Box sx={{ mt: 6, textAlign: 'center' }}>
                     <GlassCard sx={{ p: 4 }}>
