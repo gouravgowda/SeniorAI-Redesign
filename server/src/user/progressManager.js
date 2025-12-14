@@ -45,28 +45,4 @@ async function saveProgress(userId, stepId, completed) {
     }
 }
 
-async function getUserProgress(userId) {
-    try {
-        const db = admin.firestore();
-        const userDoc = await db.collection('users').doc(userId).get();
-
-        if (!userDoc.exists) {
-            return { progress: {}, completedSteps: 0 };
-        }
-
-        const userData = userDoc.data();
-        const progress = userData.progress || {};
-        const completedSteps = Object.values(progress).filter(val => val === true).length;
-
-        return {
-            progress,
-            completedSteps,
-            totalSteps: Object.keys(progress).length
-        };
-    } catch (error) {
-        console.error('Error in getUserProgress:', error);
-        throw error;
-    }
-}
-
-module.exports = { saveProgress, getUserProgress };
+module.exports = { saveProgress };

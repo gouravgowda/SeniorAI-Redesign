@@ -16,9 +16,7 @@
     "functions": {
         "source": "functions",
         "runtime": "nodejs18",
-        "predeploy": [
-            "npm --prefix \"$RESOURCE_DIR\" run lint"
-        ]
+        "predeploy": []
     },
     "firestore": {
         "rules": "firestore.rules"

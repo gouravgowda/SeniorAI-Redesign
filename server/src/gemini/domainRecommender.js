@@ -1,8 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const functions = require('firebase-functions');
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(functions.config().gemini?.api_key || process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function recommendDomain(quizAnswers) {
     try {
@@ -12,8 +10,7 @@ async function recommendDomain(quizAnswers) {
 
 Analyze these student responses from a domain discovery quiz:
 
-${quiz Answers.map((qa, idx) => `${idx + 1}. ${qa.question}\n   Answer: ${qa.answer}`).join('\n\n')
-    }
+${quizAnswers.map((qa, idx) => `${idx + 1}. ${qa.question}\n   Answer: ${qa.answer}`).join('\n\n')}
 
 Based on this information, recommend the top 3 technical engineering domains this student should pursue.
 
@@ -47,22 +44,22 @@ Output the recommendations as a JSON array with this exact structure:
 
 Ensure recommendations are practical, well - justified, and ranked by confidence score.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Parse JSON from the response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const recommendations = JSON.parse(jsonMatch[0]);
-      return recommendations;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Parse JSON from the response
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const recommendations = JSON.parse(jsonMatch[0]);
+            return recommendations;
+        }
+
+        throw new Error('Failed to parse recommendations from AI response');
+    } catch (error) {
+        console.error('Error in recommendDomain:', error);
+        throw error;
     }
-    
-    throw new Error('Failed to parse recommendations from AI response');
-  } catch (error) {
-    console.error('Error in recommendDomain:', error);
-    throw error;
-  }
 }
 
 module.exports = { recommendDomain };

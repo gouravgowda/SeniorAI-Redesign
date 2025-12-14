@@ -11,6 +11,7 @@ import { ArrowForward, Psychology, TrendingUp, Work } from '@mui/icons-material'
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../components/Cards/GlassCard';
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 // Mock recommendations (will be replaced with Gemini API)
 const mockRecommendations = [
@@ -49,13 +50,35 @@ const Recommendations = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate API call to get recommendations
         const fetchRecommendations = async () => {
             setLoading(true);
-            // TODO: Replace with actual Gemini API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            setRecommendations(mockRecommendations);
-            setLoading(false);
+            try {
+                // Get quiz answers from localStorage
+                // Note: DomainQuiz.jsx should have saved answers to localStorage
+                const savedAnswers = localStorage.getItem('quizAnswers');
+                if (savedAnswers) {
+                    const quizAnswers = JSON.parse(savedAnswers);
+                    const data = await apiRequest(API_ENDPOINTS.RECOMMEND_DOMAIN, {
+                        method: 'POST',
+                        body: { quizAnswers }
+                    });
+
+                    if (data.recommendations) {
+                        setRecommendations(data.recommendations);
+                    } else {
+                        throw new Error('No recommendations in response');
+                    }
+                } else {
+                    // Fallback if no answers found
+                    setRecommendations(mockRecommendations);
+                }
+            } catch (error) {
+                console.error('Error fetching recommendations:', error);
+                // Fallback to mock data on error
+                setRecommendations(mockRecommendations);
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchRecommendations();

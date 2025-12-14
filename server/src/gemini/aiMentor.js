@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const functions = require('firebase-functions');
 
-const genAI = new GoogleGenerativeAI(functions.config().gemini?.api_key || process.env.GEMINI_API_KEY);
+// Initialize Gemini AI with environment variable
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function chatWithMentor(message, conversationHistory = [], userContext = {}) {
     try {
@@ -49,8 +49,8 @@ Respond naturally and conversationally. Format your response in markdown.`;
 
         return {
             response: aiMessage,
-            suggestedResources: [], // Could parse links from response
-            followUpQuestions: [] // Could generate based on topic
+            suggestedResources: [],
+            followUpQuestions: []
         };
     } catch (error) {
         console.error('Error in chatWithMentor:', error);

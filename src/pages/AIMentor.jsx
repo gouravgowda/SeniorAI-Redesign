@@ -12,6 +12,7 @@ import { Send, SmartToy } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatBubble from '../components/Chat/ChatBubble';
 import GlassCard from '../components/Cards/GlassCard';
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 const AIMentor = () => {
     const [messages, setMessages] = useState([
@@ -45,42 +46,48 @@ const AIMentor = () => {
             timestamp: new Date().toISOString(),
         };
 
+        // Send user message immediately
         setMessages([...messages, userMessage]);
         setInput('');
         setIsTyping(true);
 
-        // TODO: Replace with actual Gemini API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const aiData = await apiRequest(API_ENDPOINTS.MENTOR_CHAT, {
+                method: 'POST',
+                body: {
+                    message: userMessage.message,
+                    history: messages.slice(-5), // Send recent history
+                    context: {
+                        // TODO: Add selectedDomain and currentStep from context/user state later
+                        selectedDomain: 'General Engineering',
+                        currentStep: 'Exploration'
+                    }
+                }
+            });
 
-        const aiResponse = {
-            id: messages.length + 2,
-            sender: 'ai',
-            message: getMockResponse(input),
-            timestamp: new Date().toISOString(),
-        };
+            const aiResponse = {
+                id: messages.length + 2,
+                sender: 'ai',
+                message: aiData.response,
+                timestamp: new Date().toISOString(),
+            };
 
-        setMessages(prev => [...prev, aiResponse]);
-        setIsTyping(false);
+            setMessages(prev => [...prev, aiResponse]);
+        } catch (error) {
+            console.error('Chat error:', error);
+            const errorResponse = {
+                id: messages.length + 2,
+                sender: 'ai',
+                message: "I'm having trouble connecting to my brain right now. Please try again later.",
+                timestamp: new Date().toISOString(),
+                isError: true
+            };
+            setMessages(prev => [...prev, errorResponse]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
-    const getMockResponse = (question) => {
-        // Mock AI responses (will be replaced with Gemini API)
-        const lowerQ = question.toLowerCase();
-
-        if (lowerQ.includes('react') || lowerQ.includes('javascript')) {
-            return `Great question about React! React is a powerful JavaScript library for building user interfaces. Here are key concepts:\n\n1. **Components**: Reusable pieces of UI\n2. **Props**: Data passed to components\n3. **State**: Dynamic data within components\n4. **Hooks**: Functions like useState and useEffect\n\nWould you like me to explain any of these in more detail or help with a specific React problem?`;
-        }
-
-        if (lowerQ.includes('machine learning') || lowerQ.includes('ml')) {
-            return `Machine Learning is fascinating! It's about teaching computers to learn from data. Here's a beginner-friendly breakdown:\n\n**Core Concepts:**\n- **Supervised Learning**: Learn from labeled data\n- **Unsupervised Learning**: Find patterns in unlabeled data\n- **Neural Networks**: Brain-inspired models\n\n**To get started:**\n1. Master Python\n2. Learn NumPy and Pandas\n3. Study linear algebra and statistics\n4. Practice with scikit-learn\n\nWhat specific aspect would you like to explore?`;
-        }
-
-        if (lowerQ.includes('career') || lowerQ.includes('job')) {
-            return `Career planning is important! Here's my advice:\n\n**For Engineering Students:**\n1. Build real projects (not just tutorials)\n2. Contribute to open source\n3. Create a strong GitHub profile\n4. Network on LinkedIn\n5. Practice coding interviews\n\n**Market Trends:**\n- AI/ML: High demand\n- Cloud: Growing rapidly\n- Cybersecurity: Critical need\n\nFocus on fundamentals and build a strong portfolio. What domain are you interested in?`;
-        }
-
-        return `That's an interesting question! While I'm still learning to provide more precise answers, I can help guide you in the right direction.\n\nFor technical questions:\n- Check official documentation\n- Practice with hands-on projects\n- Join relevant communities\n\nCould you provide more context or ask a more specific question? I'm here to help!`;
-    };
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {

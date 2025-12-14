@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import GlassCard from '../components/Cards/GlassCard';
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 const mockResources = {
     videos: [
@@ -111,6 +112,36 @@ const mockResources = {
 
 const Resources = () => {
     const [activeTab, setActiveTab] = useState(0);
+    const [resources, setResources] = useState({ videos: [], articles: [], documentation: [], tools: [] });
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchResources = async () => {
+            setLoading(true);
+            try {
+                const domain = localStorage.getItem('selectedDomain') || 'Web Development';
+                // Using a simple slug or ID for the API if needed, but passing the full name for now 
+                // as the backend doesn't validate strictly yet, or we can slugify it.
+                // The backend 'getResources' expects 'domainId'. 
+                // Let's assume for now we pass the raw domain string and backend handles it or returns default.
+                // Actually, let's slugify it to be safe if the backend expects IDs.
+                const domainId = domain.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+
+                const data = await apiRequest(`${API_ENDPOINTS.GET_RESOURCES}/${domainId}`);
+                if (data) {
+                    setResources(prev => ({ ...prev, ...data }));
+                }
+            } catch (error) {
+                console.error('Error fetching resources:', error);
+                // Fallback to mock data if API fails or is empty for this domain
+                setResources(mockResources);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchResources();
+    }, []);
 
     const handleTabChange = (event, newValue) => {
         setActiveTab(newValue);
@@ -168,10 +199,10 @@ const Resources = () => {
     };
 
     const tabContent = [
-        { label: 'Videos', icon: <PlayCircle />, data: mockResources.videos },
-        { label: 'Articles', icon: <Article />, data: mockResources.articles },
-        { label: 'Documentation', icon: <Description />, data: mockResources.documentation },
-        { label: 'Tools', icon: <Code />, data: mockResources.tools },
+        { label: 'Videos', icon: <PlayCircle />, data: resources.videos || [] },
+        { label: 'Articles', icon: <Article />, data: resources.articles || [] },
+        { label: 'Documentation', icon: <Description />, data: resources.documentation || [] },
+        { label: 'Tools', icon: <Code />, data: resources.tools || [] },
     ];
 
     return (

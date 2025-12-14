@@ -25,6 +25,7 @@ import GlassCard from '../components/Cards/GlassCard';
 import RoadmapProgress from '../components/Progress/RoadmapProgress';
 import StepQuiz from '../components/Quiz/StepQuiz';
 import quizData from '../data/quizData';
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 import domainRoadmaps from '../data/roadmaps';
 import additionalDomainRoadmaps from '../data/additionalRoadmaps';
@@ -103,46 +104,94 @@ const Roadmap = () => {
     const [quizResults, setQuizResults] = useState({});
 
     useEffect(() => {
-        const domain = localStorage.getItem('selectedDomain') || 'AI & Machine Learning';
-        setSelectedDomain(domain);
+        const fetchRoadmap = async () => {
+            const domain = localStorage.getItem('selectedDomain') || 'AI & Machine Learning';
+            setSelectedDomain(domain);
 
-        // Load saved progress from localStorage - NOW DOMAIN-SPECIFIC
-        const allProgress = JSON.parse(localStorage.getItem('roadmapProgress') || '{}');
-        const savedProgress = allProgress[domain] || {};
+            try {
+                // Try to get cached roadmap first
+                const cachedRoadmap = localStorage.getItem(`roadmap_${domain}`);
+                if (cachedRoadmap) {
+                    setRoadmap(JSON.parse(cachedRoadmap));
+                } else {
+                    // Fetch from API
+                    const data = await apiRequest(API_ENDPOINTS.GENERATE_ROADMAP, {
+                        method: 'POST',
+                        body: { domain, level: 'Beginner' } // TODO: Get level from user profile
+                    });
 
-        // Load quiz results - DOMAIN-SPECIFIC
-        const allQuizResults = JSON.parse(localStorage.getItem('quizResults') || '{}');
-        const savedQuizResults = allQuizResults[domain] || {};
-        setQuizResults(savedQuizResults);
+                    if (data.roadmap) {
+                        setRoadmap(data.roadmap);
+                        localStorage.setItem(`roadmap_${domain}`, JSON.stringify(data.roadmap));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching roadmap:', error);
+                // Fallback to static data if API fails
+                const domainRoadmap = allRoadmaps[domain] || fallbackRoadmap;
+                setRoadmap(domainRoadmap);
+            }
 
-        // Get roadmap for selected domain or use fallback
-        const domainRoadmap = allRoadmaps[domain] || fallbackRoadmap;
+            // Load progress
+            const allProgress = JSON.parse(localStorage.getItem('roadmapProgress') || '{}');
+            const savedProgress = allProgress[domain] || {};
 
-        // Merge saved progress with domain roadmap
-        const updatedRoadmap = domainRoadmap.map(step => ({
-            ...step,
-            completed: savedProgress[step.id] || false
-        }));
-        setRoadmap(updatedRoadmap);
+            // Merge progress (needs to be done after setting roadmap, used effect dependency)
+        };
+
+        fetchRoadmap();
     }, []);
 
-    const handleStepToggle = (stepId) => {
+    // Effect to update roadmap checked state when roadmap or domain changes
+    useEffect(() => {
+        if (roadmap.length > 0) {
+            const domain = selectedDomain;
+            const allProgress = JSON.parse(localStorage.getItem('roadmapProgress') || '{}');
+            const savedProgress = allProgress[domain] || {};
+
+            const updatedRoadmap = roadmap.map(step => ({
+                ...step,
+                completed: savedProgress[step.id] || false
+            }));
+
+            // Only update if different to avoid infinite loop
+            if (JSON.stringify(updatedRoadmap) !== JSON.stringify(roadmap)) {
+                setRoadmap(updatedRoadmap);
+            }
+        }
+    }, [selectedDomain]); // Simplified dependency
+
+
+    const handleStepToggle = async (stepId) => {
         const updatedRoadmap = roadmap.map(step =>
             step.id === stepId ? { ...step, completed: !step.completed } : step
         );
         setRoadmap(updatedRoadmap);
 
-        // Save progress to localStorage - DOMAIN-SPECIFIC
+        // Save progress locally
         const domain = selectedDomain;
         const allProgress = JSON.parse(localStorage.getItem('roadmapProgress') || '{}');
-
         const progress = {};
         updatedRoadmap.forEach(step => {
             progress[step.id] = step.completed;
         });
-
         allProgress[domain] = progress;
         localStorage.setItem('roadmapProgress', JSON.stringify(allProgress));
+
+        // Save progress to backend
+        try {
+            const step = updatedRoadmap.find(s => s.id === stepId);
+            await apiRequest(API_ENDPOINTS.SAVE_PROGRESS, {
+                method: 'POST',
+                body: {
+                    userId: 'guest_user', // TODO: Get real user ID
+                    stepId,
+                    completed: step.completed
+                }
+            });
+        } catch (error) {
+            console.error('Error saving progress:', error);
+        }
     };
 
     const handleAccordionChange = (panel) => (event, isExpanded) => {

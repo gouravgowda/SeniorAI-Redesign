@@ -9,8 +9,6 @@ async function getResources(domainId) {
         const snapshot = await resourcesRef.where('domainId', '==', domainId).get();
 
         if (snapshot.empty) {
-            // Return empty array if no resources found
-            // In production, this could trigger YouTube API call to fetch and cache resources
             console.log(`No resources found for domain: ${domainId}`);
             return {
                 videos: [],
@@ -49,11 +47,4 @@ async function getResources(domainId) {
     }
 }
 
-// TODO: Implement YouTube Data API integration
-async function fetchYouTubeResources(domain) {
-    // This would use YouTube Data API to search for relevant playlists and videos
-    // For now, returning empty array
-    return [];
-}
-
-module.exports = { getResources, fetchYouTubeResources };
+module.exports = { getResources };

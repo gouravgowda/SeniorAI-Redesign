@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -12,120 +12,7 @@ import {
 import { Code, GitHub, Star } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import GlassCard from '../components/Cards/GlassCard';
-
-const projectIdeas = {
-    beginner: [
-        {
-            title: 'Personal Portfolio Website',
-            description: 'Create responsive portfolio with HTML, CSS, and JavaScript',
-            skills: ['HTML', 'CSS', 'JavaScript'],
-            difficulty: 'Easy',
-            estimatedTime: '1 week',
-        },
-        {
-            title: 'Todo List Application',
-            description: 'Build a task manager with CRUD operations',
-            skills: ['React', 'LocalStorage', 'CSS'],
-            difficulty: 'Easy',
-            estimatedTime: '3-5 days',
-        },
-        {
-            title: 'Weather App',
-            description: 'Fetch and display weather data using API',
-            skills: ['API Integration', 'JavaScript', 'React'],
-            difficulty: 'Easy',
-            estimatedTime: '1 week',
-        },
-        {
-            title: 'Simple Calculator',
-            description: 'Build a functional calculator with operations',
-            skills: ['Python', 'Basic Logic', 'UI'],
-            difficulty: 'Easy',
-            estimatedTime: '2-3 days',
-        },
-        {
-            title: 'Markdown Note Taker',
-            description: 'Create app to write and preview markdown notes',
-            skills: ['React', 'Markdown', 'State Management'],
-            difficulty: 'Easy',
-            estimatedTime: '1 week',
-        },
-    ],
-    intermediate: [
-        {
-            title: 'E-commerce Product Page',
-            description: 'Build product listing with cart and checkout',
-            skills: ['React', 'State Management', 'API', 'Routing'],
-            difficulty: 'Medium',
-            estimatedTime: '2-3 weeks',
-        },
-        {
-            title: 'Real-time Chat Application',
-            description: 'Create chat app with WebSocket integration',
-            skills: ['Node.js', 'Socket.io', 'React', 'Database'],
-            difficulty: 'Medium',
-            estimatedTime: '3 weeks',
-        },
-        {
-            title: 'Blog Platform with CMS',
-            description: 'Full-stack blog with admin panel',
-            skills: ['Full Stack', 'Database', 'Authentication'],
-            difficulty: 'Medium',
-            estimatedTime: '3-4 weeks',
-        },
-        {
-            title: 'Expense Tracker',
-            description: 'Track income and expenses with charts',
-            skills: ['React', 'Charts', 'Database', 'Backend'],
-            difficulty: 'Medium',
-            estimatedTime: '2 weeks',
-        },
-        {
-            title: 'Movie Recommendation System',
-            description: 'Build ML-based movie recommender',
-            skills: ['Python', 'ML', 'Flask', 'Data Processing'],
-            difficulty: 'Medium',
-            estimatedTime: '3 weeks',
-        },
-    ],
-    advanced: [
-        {
-            title: 'Video Streaming Platform',
-            description: 'Build platform like YouTube with video upload',
-            skills: ['Full Stack', 'Cloud Storage', 'Video Processing', 'CDN'],
-            difficulty: 'Hard',
-            estimatedTime: '6-8 weeks',
-        },
-        {
-            title: 'AI Chatbot with NLP',
-            description: 'Create intelligent chatbot using transformers',
-            skills: ['NLP', 'Transformers', 'Python', 'API'],
-            difficulty: 'Hard',
-            estimatedTime: '4-6 weeks',
-        },
-        {
-            title: 'Real-time Collaborative Editor',
-            description: 'Build Google Docs-like editor with WebRTC',
-            skills: ['WebRTC', 'OT/CRDT', 'Real-time', 'Full Stack'],
-            difficulty: 'Hard',
-            estimatedTime: '8 weeks',
-        },
-        {
-            title: 'Kubernetes Dashboard',
-            description: 'Monitor and manage K8s clusters',
-            skills: ['Kubernetes', 'DevOps', 'React', 'WebSocket'],
-            difficulty: 'Hard',
-            estimatedTime: '6 weeks',
-        },
-        {
-            title: 'Computer Vision App',
-            description: 'Object detection and classification system',
-            skills: ['Computer Vision', 'Deep Learning', 'OpenCV', 'PyTorch'],
-            difficulty: 'Hard',
-            estimatedTime: '5-7 weeks',
-        },
-    ],
-};
+import { apiRequest, API_ENDPOINTS } from '../config/api';
 
 const portfolioTips = [
     'Create a clean, professional README for each project',
@@ -137,7 +24,43 @@ const portfolioTips = [
 ];
 
 const Projects = () => {
+    const [projectIdeas, setProjectIdeas] = useState({ beginner: [], intermediate: [], advanced: [] });
+    const [loading, setLoading] = useState(false);
     const [level, setLevel] = useState('beginner');
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            setLoading(true);
+            try {
+                const domain = localStorage.getItem('selectedDomain') || 'Web Development';
+
+                // Check cache first
+                const cachedProjects = localStorage.getItem(`projects_${domain}_${level}`);
+                if (cachedProjects) {
+                    const data = JSON.parse(cachedProjects);
+                    setProjectIdeas(prev => ({ ...prev, [level]: data }));
+                } else {
+                    const data = await apiRequest(API_ENDPOINTS.SUGGEST_PROJECTS, {
+                        method: 'POST',
+                        body: { domain, level }
+                    });
+
+                    if (data.projects) {
+                        setProjectIdeas(prev => ({ ...prev, [level]: data.projects }));
+                        // Cache result
+                        localStorage.setItem(`projects_${domain}_${level}`, JSON.stringify(data.projects));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+                // Keep existing state (empty) or handle error UI
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjects();
+    }, [level]);
 
     const handleLevelChange = (event, newLevel) => {
         if (newLevel !== null) {
@@ -202,7 +125,11 @@ const Projects = () => {
                 </Box>
 
                 <Grid container spacing={3}>
-                    {projectIdeas[level].map((project, index) => (
+                    {loading ? (
+                        <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+                            <Typography>Loading projects...</Typography>
+                        </Box>
+                    ) : (projectIdeas[level] || []).map((project, index) => (
                         <Grid item xs={12} md={6} key={index}>
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -228,7 +155,7 @@ const Projects = () => {
 
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="caption" color="text.secondary" gutterBottom>
-                                            Skills: {project.skills.join(', ')}
+                                            Skills: {(project.skills || []).join(', ')}
                                         </Typography>
                                     </Box>
 
@@ -239,7 +166,7 @@ const Projects = () => {
                                     </Box>
 
                                     <Box sx={{ mt: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        {project.skills.map((skill, idx) => (
+                                        {(project.skills || []).map((skill, idx) => (
                                             <Chip key={idx} label={skill} size="small" variant="outlined" />
                                         ))}
                                     </Box>
