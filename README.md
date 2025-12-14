@@ -49,11 +49,12 @@ An intelligent web application that helps first-year engineering students discov
 - **React Markdown** - Markdown rendering for AI responses
 
 ### Backend
-- **Firebase Cloud Functions** - Serverless backend
+### Backend
+- **Express.js** - REST API Server
+- **Node.js** - Runtime Environment
 - **Google Gemini AI** - AI recommendations and chat
+- **Firebase Admin SDK** - Firestore access
 - **Firebase Firestore** - NoSQL database
-- **Firebase Hosting** - Static site hosting
-- **Firebase Storage** - File storage
 
 ### APIs
 - **Gemini API** - AI-powered recommendations, roadmaps, and chat
@@ -122,80 +123,38 @@ cd engineering-guidance-platform
 
 ### 2. Install Dependencies
 ```bash
-# Install frontend dependencies
+# Install frontend dependencies (Root)
 npm install
 
-# Install Cloud Functions dependencies
-cd functions
+# Install backend dependencies (Server)
+cd server
 npm install
 cd ..
 ```
 
-### 3. Firebase Setup
+### 3. Environment Configuration
+Create a `.env` file in the `server` directory:
 ```bash
-# Login to Firebase
-firebase login
-
-# Initialize Firebase project
-firebase init
-
-# Select:
-# - Firestore
-# - Functions
-# - Hosting
+# server/.env
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=5000
 ```
 
-### 4. Environment Configuration
+### 4. Run Locally
+You need to run both the backend and frontend terminals.
 
-Create `.env` file in root:
-```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=your-app-id
-```
-
-Configure Firebase Functions environment variables:
+**Terminal 1: Backend Server**
 ```bash
-firebase functions:config:set gemini.api_key="your_gemini_api_key"
-firebase functions:config:set youtube.api_key="your_youtube_api_key"
-```
-
-### 5. Run Locally
-
-**Frontend:**
-```bash
+cd server
 npm run dev
-# Opens at http://localhost:5173
+# Server running at http://localhost:5000
 ```
 
-**Firebase Emulators:**
+**Terminal 2: Frontend App**
 ```bash
-firebase emulators:start
-# Functions at http://localhost:5001
-# Firestore UI at http://localhost:4000
-```
-
-## 📦 Deployment
-
-### Deploy Everything
-```bash
-npm run build
-firebase deploy
-```
-
-### Deploy Specific Services
-```bash
-# Deploy only functions
-firebase deploy --only functions
-
-# Deploy only hosting
-firebase deploy --only hosting
-
-# Deploy firestore rules
-firebase deploy --only firestore:rules
+# In the root directory
+npm run dev
+# App running at http://localhost:5173
 ```
 
 ## 🔑 API Endpoints
