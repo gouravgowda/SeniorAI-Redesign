@@ -28,32 +28,67 @@ const Projects = () => {
     const [loading, setLoading] = useState(false);
     const [level, setLevel] = useState('beginner');
 
+    const curatedProjects = {
+        'Web Development': {
+            beginner: [
+                { title: 'Personal Portfolio Site', difficulty: 'Easy', estimatedTime: '5-10 hours', skills: ['HTML', 'CSS', 'Flexbox'], description: 'Build a responsive personal portfolio to showcase your skills and projects. Focus on semantic HTML and modern CSS layout.' },
+                { title: 'Weather Dashboard', difficulty: 'Easy', estimatedTime: '8-12 hours', skills: ['JavaScript', 'API', 'DOM'], description: 'Create a weather app that fetches real-time data from an API. Learn how to handle asynchronous requests and update the UI dynamically.' },
+                { title: 'Task Management App', difficulty: 'Easy', estimatedTime: '10-15 hours', skills: ['React', 'State', 'Props'], description: 'A simple todo list app with add, delete, and mark-as-done features. Perfect for understanding React state management.' }
+            ],
+            intermediate: [
+                { title: 'E-commerce Storefront', difficulty: 'Medium', estimatedTime: '20-30 hours', skills: ['React', 'Context API', 'Router'], description: 'Build a multi-page e-commerce site with product listings, cart functionality, and checkout flow simulation.' },
+                { title: 'Blog with CMS', difficulty: 'Medium', estimatedTime: '25-35 hours', skills: ['Next.js', 'Headless CMS', 'GraphQL'], description: 'Create a static blog using Next.js and fetch content from a Headless CMS like Contentful or Strapi.' },
+                { title: 'Chat Application', difficulty: 'Medium', estimatedTime: '30-40 hours', skills: ['Socket.io', 'Node.js', 'Express'], description: 'Real-time chat app with multiple rooms. Learn about WebSockets and real-time data communication.' }
+            ],
+            advanced: [
+                { title: 'Social Media Dashboard', difficulty: 'Hard', estimatedTime: '40+ hours', skills: ['MERN Stack', 'Auth', 'Redux'], description: 'Full-stack social platform with user authentication, posts, likes, and comments. Involves complex state and database modeling.' },
+                { title: 'Project Management Tool', difficulty: 'Hard', estimatedTime: '50+ hours', skills: ['TypeScript', 'Drag & Drop', 'Firebase'], description: 'A Kanban-style broad with drag-and-drop tasks, real-time updates, and team collaboration features.' },
+                { title: 'AI Code Assistant', difficulty: 'Hard', estimatedTime: '40+ hours', skills: ['OpenAI API', 'React', 'Node.js'], description: 'Build a tool that suggests code snippets or explains code using a Large Language Model API.' }
+            ]
+        },
+        // Fallback for other domains
+        'default': {
+            beginner: [
+                { title: 'Calculator App', difficulty: 'Easy', estimatedTime: '5 hours', skills: ['Logic', 'UI'], description: 'Basic calculator with arithmetic operations.' },
+                { title: 'Note Taking App', difficulty: 'Easy', estimatedTime: '8 hours', skills: ['Storage', 'CRUD'], description: 'Simple app to creation, edit, and delete text notes.' }
+            ],
+            intermediate: [
+                { title: 'Currency Converter', difficulty: 'Medium', estimatedTime: '15 hours', skills: ['API', 'Math'], description: 'Real-time currency conversion tool.' },
+                { title: 'Quiz Application', difficulty: 'Medium', estimatedTime: '20 hours', skills: ['Logic', 'State'], description: 'Interactive quiz with score tracking and timers.' }
+            ],
+            advanced: [
+                { title: 'Full Stack Dashboard', difficulty: 'Hard', estimatedTime: '40 hours', skills: ['Full Stack', 'Data Viz'], description: 'Admin panel with charts, data tables, and auth.' }
+            ]
+        }
+    };
+
     useEffect(() => {
         const fetchProjects = async () => {
             setLoading(true);
             try {
                 const domain = localStorage.getItem('selectedDomain') || 'Web Development';
 
-                // Check cache first
-                const cachedProjects = localStorage.getItem(`projects_${domain}_${level}`);
-                if (cachedProjects) {
-                    const data = JSON.parse(cachedProjects);
-                    setProjectIdeas(prev => ({ ...prev, [level]: data }));
-                } else {
-                    const data = await apiRequest(API_ENDPOINTS.SUGGEST_PROJECTS, {
-                        method: 'POST',
-                        body: { domain, level }
-                    });
+                // 1. Try to get curated projects for this domain locally first (Instant)
+                const localData = curatedProjects[domain] || curatedProjects['default'];
+                const localProjectsForLevel = localData[level] || [];
 
-                    if (data.projects) {
-                        setProjectIdeas(prev => ({ ...prev, [level]: data.projects }));
-                        // Cache result
-                        localStorage.setItem(`projects_${domain}_${level}`, JSON.stringify(data.projects));
-                    }
+                // Set local data immediately to show something
+                setProjectIdeas(prev => ({ ...prev, [level]: localProjectsForLevel }));
+
+                // 2. OPTIONAL: Fetch from AI to supplement (if needed), but don't blocking rendering
+                // We'll skip the API call for now to guarantee reliability on Vercel
+                /*
+                const data = await apiRequest(API_ENDPOINTS.SUGGEST_PROJECTS, {
+                    method: 'POST',
+                    body: { domain, level }
+                });
+                if (data.projects && data.projects.length > 0) {
+                     setProjectIdeas(prev => ({ ...prev, [level]: data.projects }));
                 }
+                */
+
             } catch (error) {
                 console.error('Error fetching projects:', error);
-                // Keep existing state (empty) or handle error UI
             } finally {
                 setLoading(false);
             }
