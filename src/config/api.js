@@ -26,7 +26,14 @@ export async function apiRequest(endpoint, options = {}) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                // If response is HTML (e.g. 500/404 page), json() fails. 
+                // Fallback to text or status message.
+                errorData = { error: `API Error ${response.status}: ${await response.text()}` };
+            }
             throw new Error(errorData.error || `API Error: ${response.status}`);
         }
 
