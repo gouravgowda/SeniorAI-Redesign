@@ -53,6 +53,10 @@ app.get('/', (req, res) => {
     res.send('SeniorAI Backend is running!');
 });
 
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Backend is healthy' });
+});
+
 // AI Mentor Chat
 app.post('/api/mentor/chat', async (req, res) => {
     try {
