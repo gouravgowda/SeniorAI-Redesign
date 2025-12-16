@@ -10,6 +10,7 @@ import Roadmap from './pages/Roadmap';
 import AIMentor from './pages/AIMentor';
 import Resources from './pages/Resources';
 import Projects from './pages/Projects';
+import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -32,6 +33,7 @@ function App() {
             <Route path="/mentor" element={<AIMentor />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>

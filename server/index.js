@@ -45,6 +45,13 @@ const { recommendDomain } = require('./src/gemini/domainRecommender');
 const { suggestProjects } = require('./src/gemini/projectSuggester');
 const { getResources } = require('./src/youtube/resourceCurator');
 const { saveProgress } = require('./src/user/progressManager');
+const {
+    addPoints,
+    getUserPoints,
+    getLeaderboard,
+    getUserRank,
+    getUserActivities
+} = require('./src/user/pointsManager');
 
 // --- Routes ---
 
@@ -118,6 +125,64 @@ app.post('/api/user/progress', async (req, res) => {
         const { userId, stepId, completed } = req.body;
         const result = await saveProgress(userId, stepId, completed);
         res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Gamification Endpoints ---
+
+// Add Points
+app.post('/api/user/points', async (req, res) => {
+    try {
+        const { userId, activity, customAmount } = req.body;
+        const result = await addPoints(userId, activity, customAmount);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get User Points
+app.get('/api/user/:userId/points', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const pointsData = await getUserPoints(userId);
+        res.json(pointsData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get Leaderboard
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const { timeframe = 'all', limit = 100 } = req.query;
+        const leaderboard = await getLeaderboard(timeframe, parseInt(limit));
+        res.json({ leaderboard });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get User Rank
+app.get('/api/user/:userId/rank', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const rankData = await getUserRank(userId);
+        res.json(rankData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get User Activities
+app.get('/api/user/:userId/activities', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { limit = 10 } = req.query;
+        const activities = await getUserActivities(userId, parseInt(limit));
+        res.json({ activities });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

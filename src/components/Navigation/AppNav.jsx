@@ -22,6 +22,7 @@ import {
     LibraryBooks,
     AccountCircle,
     MenuBook,
+    EmojiEvents,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
@@ -50,6 +51,7 @@ const AppNav = () => {
         { label: 'AI Mentor', icon: <Chat />, path: '/mentor' },
         { label: 'Resources', icon: <LibraryBooks />, path: '/resources' },
         { label: 'Projects', icon: <School />, path: '/projects' },
+        { label: 'Leaderboard', icon: <EmojiEvents />, path: '/leaderboard' },
     ];
 
     const getActiveIndex = () => {
