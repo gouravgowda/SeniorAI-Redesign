@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     AppBar,
     Toolbar,
@@ -12,6 +12,10 @@ import {
     Menu,
     MenuItem,
     Avatar,
+    Badge,
+    Chip,
+    Divider,
+    ListItemIcon,
 } from '@mui/material';
 import {
     LightMode,
@@ -23,11 +27,17 @@ import {
     AccountCircle,
     MenuBook,
     EmojiEvents,
+    Notifications,
+    Star,
+    Settings,
+    Logout,
+    Person,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
 import Logo from '../Logo/Logo';
+import { apiRequest } from '../../config/api';
 
 const AppNav = () => {
     const { mode, toggleTheme } = useTheme();
@@ -36,6 +46,23 @@ const AppNav = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [userPoints, setUserPoints] = useState(0);
+    const [notificationCount, setNotificationCount] = useState(0);
+
+    useEffect(() => {
+        fetchUserPoints();
+    }, []);
+
+    const fetchUserPoints = async () => {
+        try {
+            const userId = localStorage.getItem('userId') || 'guest';
+            const response = await apiRequest(`/api/user/${userId}/points`);
+            setUserPoints(response.points || 0);
+        } catch (error) {
+            console.error('Error fetching points:', error);
+            setUserPoints(245); // Fallback
+        }
+    };
 
     const handleProfileClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -78,6 +105,17 @@ const AppNav = () => {
                         <Box sx={{ flexGrow: 1 }}>
                             <Logo size="small" />
                         </Box>
+                        <Chip
+                            icon={<Star sx={{ fontSize: 18 }} />}
+                            label={userPoints}
+                            size="small"
+                            sx={{
+                                bgcolor: 'primary.main',
+                                color: '#fff',
+                                fontWeight: 700,
+                                mr: 1,
+                            }}
+                        />
                         <IconButton onClick={toggleTheme} color="inherit">
                             {mode === 'light' ? <DarkMode /> : <LightMode />}
                         </IconButton>
@@ -125,22 +163,41 @@ const AppNav = () => {
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleProfileClose}
+                    PaperProps={{
+                        sx: { minWidth: 200, mt: 1 }
+                    }}
                 >
                     <MenuItem onClick={() => { navigate('/profile'); handleProfileClose(); }}>
+                        <ListItemIcon>
+                            <Person fontSize="small" />
+                        </ListItemIcon>
                         Profile
                     </MenuItem>
+                    <MenuItem onClick={() => { navigate('/leaderboard'); handleProfileClose(); }}>
+                        <ListItemIcon>
+                            <EmojiEvents fontSize="small" />
+                        </ListItemIcon>
+                        Leaderboard
+                    </MenuItem>
                     <MenuItem onClick={() => { navigate('/settings'); handleProfileClose(); }}>
+                        <ListItemIcon>
+                            <Settings fontSize="small" />
+                        </ListItemIcon>
                         Settings
                     </MenuItem>
+                    <Divider />
                     <MenuItem onClick={() => {
-                        // Clear user data on logout
                         if (window.confirm('Are you sure you want to logout?')) {
-                            navigate('/');
+                            localStorage.clear();
+                            navigate('/login');
                             handleProfileClose();
                         } else {
                             handleProfileClose();
                         }
                     }}>
+                        <ListItemIcon>
+                            <Logout fontSize="small" />
+                        </ListItemIcon>
                         Logout
                     </MenuItem>
                 </Menu>
@@ -206,8 +263,31 @@ const AppNav = () => {
                     ))}
                 </Box>
 
+                <Chip
+                    icon={<Star sx={{ fontSize: 20 }} />}
+                    label={`${userPoints} pts`}
+                    size="medium"
+                    sx={{
+                        bgcolor: 'primary.main',
+                        color: '#fff',
+                        fontWeight: 700,
+                        mr: 2,
+                        cursor: 'pointer',
+                        '&:hover': {
+                            bgcolor: 'primary.dark',
+                        },
+                    }}
+                    onClick={() => navigate('/leaderboard')}
+                />
+
                 <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
                     {mode === 'light' ? <DarkMode /> : <LightMode />}
+                </IconButton>
+
+                <IconButton sx={{ mr: 1 }}>
+                    <Badge badgeContent={notificationCount} color="error">
+                        <Notifications />
+                    </Badge>
                 </IconButton>
 
                 <IconButton onClick={handleProfileClick}>
@@ -220,22 +300,41 @@ const AppNav = () => {
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleProfileClose}
+                    PaperProps={{
+                        sx: { minWidth: 200, mt: 1 }
+                    }}
                 >
                     <MenuItem onClick={() => { navigate('/profile'); handleProfileClose(); }}>
-                        Profile
+                        <ListItemIcon>
+                            <Person fontSize="small" />
+                        </ListItemIcon>
+                        Dashboard
+                    </MenuItem>
+                    <MenuItem onClick={() => { navigate('/leaderboard'); handleProfileClose(); }}>
+                        <ListItemIcon>
+                            <EmojiEvents fontSize="small" />
+                        </ListItemIcon>
+                        Leaderboard
                     </MenuItem>
                     <MenuItem onClick={() => { navigate('/settings'); handleProfileClose(); }}>
+                        <ListItemIcon>
+                            <Settings fontSize="small" />
+                        </ListItemIcon>
                         Settings
                     </MenuItem>
+                    <Divider />
                     <MenuItem onClick={() => {
-                        // Clear user data on logout
                         if (window.confirm('Are you sure you want to logout?')) {
+                            localStorage.clear();
                             navigate('/login');
                             handleProfileClose();
                         } else {
                             handleProfileClose();
                         }
                     }}>
+                        <ListItemIcon>
+                            <Logout fontSize="small" />
+                        </ListItemIcon>
                         Logout
                     </MenuItem>
                 </Menu>
