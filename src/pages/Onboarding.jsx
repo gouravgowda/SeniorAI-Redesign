@@ -148,7 +148,7 @@ const Onboarding = () => {
                                 variant="contained"
                                 size="large"
                                 endIcon={<ArrowForward />}
-                                onClick={() => navigate('/quiz')}
+                                onClick={() => navigate('/login')}
                                 sx={{
                                     px: 6,
                                     py: 2,
@@ -377,7 +377,7 @@ const Onboarding = () => {
                                 variant="contained"
                                 size="large"
                                 endIcon={<ArrowForward />}
-                                onClick={() => navigate('/quiz')}
+                                onClick={() => navigate('/login')}
                                 sx={{
                                     px: 6,
                                     py: 2,
@@ -387,7 +387,7 @@ const Onboarding = () => {
                                     textTransform: 'none',
                                 }}
                             >
-                                Take the Quiz Now
+                                Get Started
                             </Button>
                         </GlassCard>
                     </motion.div>
