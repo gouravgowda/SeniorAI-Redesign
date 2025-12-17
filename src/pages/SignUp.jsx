@@ -23,21 +23,74 @@ const SignUp = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSignUp = (e) => {
+    // Webhook function to trigger welcome email
+    const sendWelcomeEmailWebhook = async (name, email) => {
+        try {
+            const response = await fetch('https://api.agentx.so/v1/agent/6942c185573fd82339f22c7c/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer AIzaSyCMfIBdosDTJqOVFr2HxvjAVI7BxP7EWl0'
+                },
+                body: JSON.stringify({
+                    message: `New user registered: Name: ${name}, Email: ${email}. Please send them a welcome email to ${email}.`
+                })
+            });
+
+            if (response.ok) {
+                console.log('Welcome email webhook triggered successfully');
+            } else {
+                console.error('Webhook failed:', await response.text());
+            }
+        } catch (error) {
+            console.error('Error triggering webhook:', error);
+            // Don't block registration if webhook fails
+        }
+    };
+
+    const handleSignUp = async (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
             alert("Passwords don't match!");
             return;
         }
-        // Add actual registration logic here
-        // For now, simulate success and redirect to login
-        alert('Account created successfully! Please login.');
-        navigate('/login');
+
+        try {
+            // Store user data in localStorage (simulate registration)
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userId', 'user-' + Date.now());
+            localStorage.setItem('userName', formData.name);
+            localStorage.setItem('userEmail', formData.email);
+
+            // Trigger webhook for welcome email
+            await sendWelcomeEmailWebhook(formData.name, formData.email);
+
+            // Show success message
+            alert('Account created successfully! Check your email for a welcome message.');
+
+            // Redirect to login or home
+            navigate('/');
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert('Registration failed. Please try again.');
+        }
     };
 
     const handleSocialLogin = async (providerName) => {
         if (!auth) {
-            alert("Firebase is not configured. Please set up your .env file with Firebase credentials to use social login.");
+            // Fallback for demo - simulate social login
+            const demoName = `${providerName.charAt(0).toUpperCase() + providerName.slice(1)} User`;
+            const demoEmail = `${providerName}user@example.com`;
+
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userId', `${providerName}-user`);
+            localStorage.setItem('userName', demoName);
+            localStorage.setItem('userEmail', demoEmail);
+
+            // Trigger webhook
+            await sendWelcomeEmailWebhook(demoName, demoEmail);
+
+            navigate('/');
             return;
         }
         try {
@@ -51,6 +104,18 @@ const SignUp = () => {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             console.log('User signed up:', user);
+
+            // Store user data
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userName', user.displayName || user.email);
+            localStorage.setItem('userEmail', user.email);
+
+            // Trigger webhook for welcome email
+            await sendWelcomeEmailWebhook(
+                user.displayName || user.email.split('@')[0],
+                user.email
+            );
 
             // Redirect after successful sign up
             navigate('/');
