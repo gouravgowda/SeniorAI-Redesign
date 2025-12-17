@@ -23,24 +23,23 @@ const SignUp = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Webhook function to trigger welcome email
+    // Webhook function to trigger welcome email via serverless function (fixes CORS)
     const sendWelcomeEmailWebhook = async (name, email) => {
         try {
-            const response = await fetch('https://api.agentx.so/v1/agent/6942c185573fd82339f22c7c/chat', {
+            const response = await fetch('/api/webhook', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer AIzaSyCMfIBdosDTJqOVFr2HxvjAVI7BxP7EWl0'
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    message: `New user registered: Name: ${name}, Email: ${email}. Please send them a welcome email to ${email}.`
-                })
+                body: JSON.stringify({ name, email })
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                console.log('Welcome email webhook triggered successfully');
+                console.log('Welcome email webhook triggered successfully', data);
             } else {
-                console.error('Webhook failed:', await response.text());
+                console.error('Webhook failed:', data);
             }
         } catch (error) {
             console.error('Error triggering webhook:', error);
